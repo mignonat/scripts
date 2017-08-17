@@ -91,6 +91,8 @@ cd ../orchestra
 docker build -t orchestra-app .
 echo "Orchestra image built"
 
+#TODO : apply variable in the build ...
+
 #containerId = $(docker run --name orchestra-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:9.4)
 #get db ip : => docker inspect --format '{{ .NetworkSettings.IPAddress }}' <container_id>
 

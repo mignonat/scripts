@@ -1,0 +1,38 @@
+FROM ubuntu
+
+# !!! Database and tables must be created before running this image !!!
+
+# creating orchestra user
+RUN useradd -ms /bin/bash orchestra
+
+WORKDIR /home/orchestra/
+
+# copying and unpacking archive
+ADD orchestra-linux64-install-6.1.RC.tar.gz ./tmp
+RUN chown -Rf orchestra:orchestra ./tmp
+USER orchestra
+RUN mv ./tmp/orchestra-linux64-install-6.1.RC ./tmp/app
+
+WORKDIR /home/orchestra/tmp/app/
+
+# copying install file
+COPY ./install.properties ./
+
+WORKDIR /home/orchestra/tmp/app
+
+# installing app
+RUN ./install.sh
+
+WORKDIR /home/orchestra/
+
+# removing temp files
+RUN rm -Rf ./tmp
+
+# TODO add the license
+
+WORKDIR /home/orchestra/app/orchestra/bin
+
+EXPOSE 8080
+
+# starting orchestra
+CMD ./nqi-service run
