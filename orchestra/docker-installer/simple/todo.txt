@@ -1,2 +1,0 @@
-- Integrate db nqidb creation in extended postgres image
-- Use license

@@ -62,7 +62,6 @@ done
 # Starting Orchestra image
 stop_container_if_running_by_tag $orchestracontainername
 docker run -d --net=host -p 7001:8080 --name $orchestracontainername $orchestraimagename
-echo "docker run -d --net=host --name $orchestracontainername $orchestraimagename"
 echo "Orchestra container successfuly started"
 
 echo "All containers have been started !"

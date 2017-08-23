@@ -1,0 +1,1 @@
+- Script test if commands succeed with $? == 0 => use a function params ($? code, error message)
