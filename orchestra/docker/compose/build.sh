@@ -161,4 +161,14 @@ echo '      - "'$orchestraport':8080"' >> $composefile
 echo '    depends_on:' >> $composefile
 echo '      - "database"' >> $composefile
 
-echo "Success ; Commmands available : start.sh & stop.sh"
+echo "Success"
+echo ""
+echo "To start the app use start.sh"
+echo "To stop  the app use stop.sh"
+echo ""
+echo "  To know the id of the container named 'orchestra-app' :"
+echo "      docker ps"
+echo "  To know the container ip from the id :"
+echo "      docker inspect --format '{{ .NetworkSettings.IPAddress }}' <container_id>"
+echo "  And to access the application :"
+echo "      http://<container_ip>:8080 :"

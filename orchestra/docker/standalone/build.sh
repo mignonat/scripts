@@ -3,7 +3,8 @@
 extractionDir=""
 archiveName=""
 licenseFound=false
-
+orchestraImage="orchestra-app"
+orchestraContainer="orchestra-ctn"
 prompt=">"
 varbuff=""
 language="fr"
@@ -41,13 +42,13 @@ fi
 
 # Ask for variables
 
-#echo "Select language :"
-#select language in "fr" "en"; do
-#    case $language in
-#        fr ) echo "Language 'fr' selected"; break;;
-#        en ) echo "Language 'en' selected"; break;;
-#    esac
-#done
+echo "Select language :"
+select language in "fr" "en"; do
+    case $language in
+        fr ) echo "Language 'fr' selected"; break;;
+        en ) echo "Language 'en' selected"; break;;
+    esac
+done
 
 echo "Extracting sql files from archive"
 tar -xf $archiveName $extractionDir/sql/postgres/sql
@@ -74,11 +75,13 @@ echo 'smtp.host=#' >> $installfile
 echo 'smtp.port=25' >> $installfile
 
 echo "Building orchestra image"
-docker build --build-arg ARCHIVE_NAME=$archiveName --build-arg LANGUAGE=$language -f ./Dockerfile-app -t orchestra-app . # --no-cache
+docker build --build-arg ARCHIVE_NAME=$archiveName --build-arg LANGUAGE=$language -f ./Dockerfile-app -t $orchestraImage . # --no-cache
 
 echo "Removing unneeded files"
 rm $installfile
 rm -Rf sql
 
-echo "Success"
-echo "docker run --rm --net=host -p 7001:8080 --name orchestra-with-postgres orchestra-app"
+echo "Build finished"
+echo ""
+echo "To run a container of the image :"
+echo "    docker run --rm -p 8080:8080 --name "$orchestraContainer" "$orchestraImage

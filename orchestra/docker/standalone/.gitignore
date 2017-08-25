@@ -1,2 +1,4 @@
 nqi.license
 *.tar.gz
+sql
+install.properties

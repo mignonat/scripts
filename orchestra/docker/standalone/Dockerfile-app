@@ -1,6 +1,6 @@
 FROM ubuntu
 
-# creating docker user
+# creating postgres user
 RUN useradd -ms /bin/bash postgres
 
 RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8
@@ -37,9 +37,9 @@ WORKDIR /home/postgres/
 ARG ARCHIVE_NAME
 ADD ${ARCHIVE_NAME} ./tmp
 RUN chown -Rf postgres:postgres ./tmp
-RUN mv ./tmp/$(echo $ARCHIVE_NAME | sed 's/.......$//g') ./tmp/app
+RUN mv ./tmp/$(echo $ARCHIVE_NAME | sed 's/.......$//g') ./tmp/install_dir
 
-WORKDIR /home/postgres/tmp/app/
+WORKDIR /home/postgres/tmp/install_dir/
 
 # copying install file
 COPY ./install.properties ./
@@ -51,11 +51,10 @@ WORKDIR /home/postgres/
 
 # removing temp files
 RUN rm -Rf ./tmp
+RUN rm -Rf /home/postgres/sql
 
-WORKDIR /home/postgres/app/orchestra/applications/local/license
 # adding the license
-
-COPY ./nqi.license ./
+COPY ./nqi.license /home/postgres/app/orchestra/applications/local/license
 
 WORKDIR /home/postgres/app/orchestra/bin
 
