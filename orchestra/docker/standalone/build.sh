@@ -75,7 +75,7 @@ echo 'smtp.host=#' >> $installfile
 echo 'smtp.port=25' >> $installfile
 
 echo "Building orchestra image"
-docker build --build-arg ARCHIVE_NAME=$archiveName --build-arg LANGUAGE=$language -f ./Dockerfile-app -t $orchestraImage . # --no-cache
+docker build --build-arg ARCHIVE_NAME=$archiveName --build-arg LANGUAGE=$language --build-arg PG_VERSION="9.4" -f ./Dockerfile-app -t $orchestraImage . # --no-cache
 
 echo "Removing unneeded files"
 rm $installfile

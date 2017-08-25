@@ -3,9 +3,13 @@ FROM ubuntu
 # creating postgres user
 RUN useradd -ms /bin/bash postgres
 
+ARG PG_VERSION
+
 RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main" > /etc/apt/sources.list.d/pgdg.list
-RUN apt-get update && apt-get install -y python-software-properties software-properties-common postgresql-9.3 postgresql-client-9.3 postgresql-contrib-9.3
+RUN apt-get update &&\
+    apt-get install -y python-software-properties software-properties-common \
+                       postgresql-$PG_VERSION postgresql-client-$PG_VERSION postgresql-contrib-$PG_VERSION
 
 WORKDIR /home/postgres/
 
@@ -26,8 +30,8 @@ RUN /etc/init.d/postgresql start &&\
 # Add VOLUMEs to allow backup of config, logs and databases
 VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
 
-RUN echo "host all  all    0.0.0.0/0  trust" >> /etc/postgresql/9.3/main/pg_hba.conf
-RUN echo "listen_addresses='*'" >> /etc/postgresql/9.3/main/postgresql.conf
+RUN echo "host all  all    0.0.0.0/0  trust" >> /etc/postgresql/$PG_VERSION/main/pg_hba.conf
+RUN echo "listen_addresses='*'" >> /etc/postgresql/$PG_VERSION/main/postgresql.conf
 
 USER root
 
@@ -49,7 +53,7 @@ RUN ./install.sh
 
 WORKDIR /home/postgres/
 
-# removing temp files
+# removing unneeded files
 RUN rm -Rf ./tmp
 RUN rm -Rf /home/postgres/sql
 
@@ -58,15 +62,29 @@ COPY ./nqi.license /home/postgres/app/orchestra/applications/local/license
 
 WORKDIR /home/postgres/app/orchestra/bin
 
-COPY ./startup.sh ./
+RUN echo "#!/bin/bash" > ./startup.sh
+RUN echo "/usr/lib/postgresql/"$PG_VERSION"/bin/postgres -D /var/lib/postgresql/"$PG_VERSION"/main -c config_file=/etc/postgresql/"$PG_VERSION"/main/postgresql.conf &" >> ./startup.sh
+RUN echo "pg_isready -h localhost -p \""5432"\" > /dev/null 2> /dev/null" >> ./startup.sh
+RUN echo "attempt=0" >> ./startup.sh
+RUN echo "res=\$?" >> ./startup.sh
+RUN echo "while [ ! \$res -eq 0 ]; do" >> ./startup.sh
+RUN echo "    echo 'Waiting to postgres to be up ... (code='\$res')'" >> ./startup.sh
+RUN echo "    sleep 3" >> ./startup.sh
+RUN echo "    pg_isready -h localhost -p \""5432"\" > /dev/null 2> /dev/null" >> ./startup.sh
+RUN echo "    res=\$?" >> ./startup.sh
+RUN echo "    ((attempt++))" >> ./startup.sh
+RUN echo "    if [ \$attempt > 5 ]; then" >> ./startup.sh
+RUN echo "        echo 'Max attempt reached, exit ...'" >> ./startup.sh
+RUN echo "        exit 1" >> ./startup.sh
+RUN echo "    fi" >> ./startup.sh
+RUN echo "done" >> ./startup.sh
+RUN echo "./nqi-service run" >> ./startup.sh
+
 RUN chown postgres:postgres ./startup.sh
 RUN chmod +x ./startup.sh
 
 USER postgres
 
-# exposing port
-
 EXPOSE 8080
 
-# starting orchestra
 CMD ./startup.sh
