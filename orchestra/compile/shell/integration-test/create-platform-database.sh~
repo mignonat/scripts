@@ -1,0 +1,13 @@
+#!/bin/sh
+
+export NQI_VERSION=head
+export NQI_REP=/usr/local/nqi/dev/${NQI_VERSION}/nqi
+
+cd ${NQI_REP}/platform/test
+mvn -Dmaven.test.skip=false test
+STATUS=$?
+if ! [ $STATUS -eq 0 ]; then
+	echo "mvn platform test failed !"
+	exit 2
+fi
+
