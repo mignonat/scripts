@@ -1,4 +1,3 @@
-
 # !!! Database and tables must have been created before running this build
 
 FROM ubuntu
@@ -7,17 +6,16 @@ RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys B97
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 RUN apt-get update && apt-get install -y postgresql-client
 
-RUN pg_isready --help
-
 # creating orchestra user
 RUN useradd -ms /bin/bash orchestra
 
 WORKDIR /home/orchestra/
 
 # copying and unpacking archive
-ADD orchestra-linux64-install-6.1.RC.tar.gz ./tmp
+ARG ARCHIVE_NAME
+ADD ${ARCHIVE_NAME} ./tmp
 RUN chown -Rf orchestra:orchestra ./tmp
-RUN mv ./tmp/orchestra-linux64-install-6.1.RC ./tmp/app
+RUN mv ./tmp/$(echo $ARCHIVE_NAME | sed 's/.......$//g') ./tmp/app
 USER orchestra
 
 WORKDIR /home/orchestra/tmp/app/
@@ -46,10 +44,12 @@ ARG DB_HOST_NAME
 ARG DB_PORT
 RUN echo "#!/bin/bash" > ./waitAndRun.sh
 RUN echo "pg_isready -h "$DB_HOST_NAME" -p "$DB_PORT" > /dev/null 2> /dev/null" >> ./waitAndRun.sh
-RUN echo "while [ \$? != 0 ]; do" >> waitAndRun.sh
-RUN echo "  echo 'Waiting to postgres to be up ...'" >> ./waitAndRun.sh
+RUN echo "res=\$?" >> ./waitAndRun.sh
+RUN echo "while [ ! \$res -eq 0 ]; do" >> waitAndRun.sh
+RUN echo "  echo 'Waiting to postgres to be up ... (code='\$res')'" >> ./waitAndRun.sh
 RUN echo "  sleep 2" >> ./waitAndRun.sh
 RUN echo "  pg_isready -h "$DB_HOST_NAME" -p "$DB_PORT" > /dev/null 2> /dev/null" >> ./waitAndRun.sh
+RUN echo "  res=\$?" >> ./waitAndRun.sh
 RUN echo "done" >> ./waitAndRun.sh
 RUN echo "./nqi-service run" >> ./waitAndRun.sh
 

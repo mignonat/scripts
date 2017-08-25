@@ -15,7 +15,7 @@ orchestraport=7001
 installfile="./install.properties"
 composefile="./docker-compose.yml"
 postgresdockerfile="./Dockerfile-postgres"
-dbhostname="database"
+dbhostname="127.0.0.1" #"database"
 
 # for each file in the current dir
 for entry in `ls`; do
@@ -110,7 +110,7 @@ echo "COPY ./sql/init-all-$language.sql /docker-entrypoint-initdb.d/20-init-all.
 echo "RUN chmod -Rf 777 /docker-entrypoint-initdb.d" >> $postgresdockerfile
 
 echo "Building postgres image"
-docker build --no-cache -f $postgresdockerfile -t orchestra-postgres . # --no-cache
+docker build -f $postgresdockerfile -t orchestra-postgres . # --no-cache
 
 echo "Creating .dockerignore file for orchestra build"
 echo 'sql' > ./.dockerignore
@@ -135,7 +135,7 @@ echo 'smtp.host=#' >> $installfile
 echo 'smtp.port=25' >> $installfile
 
 echo "Building orchestra image"
-docker build --build-arg DB_PORT=$dbport --build-arg DB_HOST_NAME=$dbhostname -f ./Dockerfile-app -t orchestra-app . # --no-cache
+docker build --build-arg DB_PORT=$dbport --build-arg DB_HOST_NAME=$dbhostname --build-arg ARCHIVE_NAME=$archiveName -f ./Dockerfile-app -t orchestra-app . # --no-cache
 
 echo "Removing unneeded files"
 rm $installfile
@@ -161,4 +161,4 @@ echo '      - "'$orchestraport':8080"' >> $composefile
 echo '    depends_on:' >> $composefile
 echo '      - "database"' >> $composefile
 
-echo "Success, to run => docker-compose up, to stop docker-compose down"
+echo "Success ; Commmands available : start.sh & stop.sh"

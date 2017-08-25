@@ -1,0 +1,73 @@
+FROM ubuntu
+
+# creating docker user
+RUN useradd -ms /bin/bash postgres
+
+RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8
+RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+RUN apt-get update && apt-get install -y python-software-properties software-properties-common postgresql-9.3 postgresql-client-9.3 postgresql-contrib-9.3
+
+WORKDIR /home/postgres/
+
+RUN mkdir sql
+COPY ./sql ./sql
+RUN chown -Rf postgres:postgres ./sql
+
+USER postgres
+
+ARG LANGUAGE
+
+RUN /etc/init.d/postgresql start &&\
+    psql --command "ALTER USER postgres WITH PASSWORD 'postgres';" &&\
+    psql --command "CREATE DATABASE nqidb OWNER postgres;" &&\
+    psql -U postgres -d nqidb -a -f /home/postgres/sql/create-all.sql &&\
+    psql -U postgres -d nqidb -a -f /home/postgres/sql/init-all-${LANGUAGE}.sql
+
+# Add VOLUMEs to allow backup of config, logs and databases
+VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
+
+RUN echo "host all  all    0.0.0.0/0  trust" >> /etc/postgresql/9.3/main/pg_hba.conf
+RUN echo "listen_addresses='*'" >> /etc/postgresql/9.3/main/postgresql.conf
+
+USER root
+
+WORKDIR /home/postgres/
+
+# copying and unpacking archive
+ARG ARCHIVE_NAME
+ADD ${ARCHIVE_NAME} ./tmp
+RUN chown -Rf postgres:postgres ./tmp
+RUN mv ./tmp/$(echo $ARCHIVE_NAME | sed 's/.......$//g') ./tmp/app
+
+WORKDIR /home/postgres/tmp/app/
+
+# copying install file
+COPY ./install.properties ./
+
+# installing app
+RUN ./install.sh
+
+WORKDIR /home/postgres/
+
+# removing temp files
+RUN rm -Rf ./tmp
+
+WORKDIR /home/postgres/app/orchestra/applications/local/license
+# adding the license
+
+COPY ./nqi.license ./
+
+WORKDIR /home/postgres/app/orchestra/bin
+
+COPY ./startup.sh ./
+RUN chown postgres:postgres ./startup.sh
+RUN chmod +x ./startup.sh
+
+USER postgres
+
+# exposing port
+
+EXPOSE 8080
+
+# starting orchestra
+CMD ./startup.sh
