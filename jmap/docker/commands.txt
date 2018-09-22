@@ -1,0 +1,4 @@
+docker build -f ./Dockerfile -t jmap-server .
+
+docker run --rm -p 80:80 -v /Users/lmignonat/Desktop/scripts/jmap/docker/jmap:/jmap --name jmap-server-ctn jmap-server
+docker run --rm -v /Users/lmignonat/Desktop/scripts/jmap/docker/jmap:/jmap --name jmap-server-ctn --network=host jmap-server
